@@ -3,21 +3,14 @@ import 'package:http_app/model/User.dart';
 import 'package:http_app/service/user_service.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'HTTP and Data Persistence',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      title: 'HTTP and Persistence Demo',
       home: UserScreen(),
     );
   }
@@ -28,50 +21,50 @@ class UserScreen extends StatefulWidget {
   _UserScreenState createState() => _UserScreenState();
 }
 
-//we are making user state to maintain state on UI
 class _UserScreenState extends State<UserScreen> {
   final UserService _userService = UserService();
   User? _user;
-
-  void initState() {
-    super.initState();
-    _loadUser();
-  }
-
-  void _loadUser() async {
-    User? user = await _userService.loadUser();
-    setState(() {
-      _user = user;
-    });
-  }
+  String _errorMessage = '';
 
   void _fetchAndSaveUser() async {
-    User user = await _userService.fetchUser();
-    await _userService.saveUser(user);
-    setState(() {
-      _user = user;
-    });
+    try {
+      User user = await _userService.fetchUser();
+      setState(() {
+        _user = user;
+        _errorMessage = '';
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Random User Fetcher'),
+      ),
       body: Center(
-        child: _user == null 
-        ? Text('No User Loaded!') 
-        : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.network(_user!.thumbnail),
-            Text(_user!.name),
-            Text(_user!.email)
-          ],
-        ) ,
+        child: _errorMessage.isNotEmpty
+            ? Text(_errorMessage)
+            : _user == null
+              ? Text('No user loaded')
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Image.network(_user!.thumbnail),
+                    Text(_user!.name),
+                    Text(_user!.email),
+                  ],
+                ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _fetchAndSaveUser,
+        tooltip: 'Fetch User',
         child: Icon(Icons.refresh),
-        ),
+      ),
     );
   }
 }

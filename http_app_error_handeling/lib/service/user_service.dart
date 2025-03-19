@@ -14,13 +14,33 @@ class UserService {
   //will request and server will response
 
   //Fetch user from Server
-  Future<User> fetchUser() async {
-    final response = await http.get(Uri.parse(apiUrl));
+  // Future<User> fetchUser() async {
+  //   final response = await http.get(Uri.parse(apiUrl));
 
-    if (response.statusCode == 200) {
-      return User.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Failed to load user');
+  //   if (response.statusCode == 200) {
+  //     return User.fromJson(json.decode(response.body));
+  //   } else {
+  //     throw Exception('Failed to load user');
+  //   }
+  // }
+
+  Future<User> fetchUser() async {
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        return User.fromJson(json.decode(response.body));
+      } else {
+        // Use the custom exception for non-200 responses
+        throw FetchDataException(
+            'Failed to load user, Status code: ${response.statusCode}');
+      }
+    } on http.ClientException {
+      // Handle client-side errors
+      throw FetchDataException('Client error occurred');
+    } catch (e) {
+      // Catch and rethrow any other exceptions as a FetchDataException
+      throw FetchDataException(e.toString());
     }
   }
 
@@ -49,4 +69,22 @@ class UserService {
 
   //we are creating the service where we will fetch data from server
   //and save in our shared pref its our local data storage.
+}
+
+// Custom Exception for fetch data errors
+class FetchDataException implements Exception {
+  final String message;
+  FetchDataException(this.message);
+
+  @override
+  String toString() => "FetchDataException: $message";
+}
+
+// Optional: Custom Exception for no Internet connection
+class NoInternetException implements Exception {
+  final String message;
+  NoInternetException(this.message);
+
+  @override
+  String toString() => "NoInternetException: $message";
 }
